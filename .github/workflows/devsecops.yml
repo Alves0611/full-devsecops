@@ -30,8 +30,11 @@ jobs:
       - name: Build with Maven
         run: mvn clean compile
 
-      - name: Run tests
+      - name: Run tests with JaCoCo
         run: mvn test
+
+      - name: Generate JaCoCo report
+        run: mvn jacoco:report
 
       - name: Package application
         run: mvn package -DskipTests
