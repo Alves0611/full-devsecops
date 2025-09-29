@@ -9,7 +9,7 @@ on:
         default: ${{ github.sha }}
 
 jobs:
-  security-scan:
+  security:
     name: Security Scanning
     runs-on: ubuntu-latest
 
