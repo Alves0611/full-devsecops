@@ -4,8 +4,9 @@ metadata:
   labels:
     app: devsecops
   name: devsecops
+  namespace: _{_NAMESPACE_}_
 spec:
-  replicas: 2
+  replicas: _{_REPLICAS_}_
   selector:
     matchLabels:
       app: devsecops
@@ -15,5 +16,7 @@ spec:
         app: devsecops
     spec:
       containers:
-        - image: replace
+        - image: _{_K8S_IMAGE_}_
           name: devsecops-container
+          ports:
+            - containerPort: 8080
