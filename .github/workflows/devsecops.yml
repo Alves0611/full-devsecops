@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  unit-testing:
     runs-on: ubuntu-latest
 
     steps:
@@ -43,8 +43,8 @@ jobs:
           path: target/*.jar
 
   docker:
-    name: Build and Push to Dockerhub
-    needs: build
+    name: Build and Push Docker Image
+    needs: unit-testing
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
