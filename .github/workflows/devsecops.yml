@@ -7,7 +7,22 @@ on:
   workflow_dispatch:
 
 jobs:
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Detect secrets with Talisman in incoming commits
+        uses: carhartl/talisman-secrets-scan-action@v1.4.0
+        continue-on-error: true
+
   unit-testing:
+    needs: security-scan
     runs-on: ubuntu-latest
 
     steps:
