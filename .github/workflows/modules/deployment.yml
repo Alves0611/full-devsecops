@@ -1,0 +1,47 @@
+name: Kubernetes Deployment
+
+on:
+  workflow_call:
+    inputs:
+      image-tag:
+        required: true
+        type: string
+
+jobs:
+  deployment:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Install kubectl CLI
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.27.4
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region us-east-1 --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Replace Token in Manifest files
+        uses: cschleiden/replace-tokens@v1
+        with:
+          tokenPrefix: "_{_"
+          tokenSuffix: "_}_"
+          files: '["kubernetes/*.yml"]'
+        env:
+          NAMESPACE: ${{ vars.NAMESPACE }}
+          REPLICAS: ${{ vars.REPLICAS }}
+          K8S_IMAGE: ${{ inputs.image-tag }}
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f kubernetes/
