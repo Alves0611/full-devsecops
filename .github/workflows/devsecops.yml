@@ -107,7 +107,7 @@ jobs:
         with:
           tokenPrefix: "_{_"
           tokenSuffix: "_}_"
-          files: '["kubernetes/*.yaml"]'
+          files: '["kubernetes/*.yml"]'
         env:
           NAMESPACE: ${{ vars.NAMESPACE }}
           REPLICAS: ${{ vars.REPLICAS }}
