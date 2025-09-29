@@ -30,8 +30,17 @@ jobs:
       - name: Build with Maven
         run: mvn clean compile
 
-      - name: Run tests
+      - name: Run tests with JaCoCo
         run: mvn test
+
+      - name: Generate JaCoCo report
+        run: mvn jacoco:report
+
+      - name: Upload JaCoCo coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-report
+          path: target/site/jacoco/
 
       - name: Package application
         run: mvn package -DskipTests
