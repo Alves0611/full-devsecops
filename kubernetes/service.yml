@@ -4,6 +4,7 @@ metadata:
   labels:
     app: devsecops
   name: devsecops-svc
+  namespace: _{_NAMESPACE_}_
 spec:
   ports:
     - port: 8080
