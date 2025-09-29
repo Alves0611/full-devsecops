@@ -1,0 +1,31 @@
+name: DevSecOps Pipeline - Main Orchestrator
+
+on:
+  push:
+    branches:
+      - feature/*
+  workflow_dispatch:
+
+jobs:
+  security:
+    name: Security Scanning
+    uses: ./.github/workflows/modules/security.yml
+
+  testing:
+    name: Testing and Build
+    needs: security
+    uses: ./.github/workflows/modules/testing.yml
+
+  docker:
+    name: Docker Build and Push
+    needs: testing
+    uses: ./.github/workflows/modules/docker.yml
+    with:
+      app-jar: ${{ needs.testing.outputs.app-jar }}
+
+  deployment:
+    name: Kubernetes Deployment
+    needs: docker
+    uses: ./.github/workflows/modules/deployment.yml
+    with:
+      image-tag: ${{ needs.docker.outputs.image-tag }}
