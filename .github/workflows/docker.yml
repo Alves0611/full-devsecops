@@ -6,10 +6,11 @@ on:
       app-jar:
         required: true
         type: string
-    outputs:
-      image-tag:
-        description: "Built Docker image tag"
-        value: ${{ secrets.DOCKER_USERNAME }}/devsecops:${{ github.sha }}
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
 
 jobs:
   docker:

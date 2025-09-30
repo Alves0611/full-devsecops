@@ -51,8 +51,17 @@ jobs:
       - name: Package application
         run: mvn package -DskipTests
 
+      - name: Run PIT Mutation Tests
+        run: mvn org.pitest:pitest-maven:mutationCoverage
+
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-jar
           path: target/*.jar
+
+      - name: Upload PIT Mutation Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: pit-mutation-reports
+          path: target/pit-reports/
