@@ -35,4 +35,4 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
     with:
-      image-tag: ${{ needs.docker.outputs.image-tag }}
+      image-tag: ${{ secrets.DOCKER_USERNAME }}/devsecops:${{ github.sha }}
