@@ -7,6 +7,11 @@ on:
         required: false
         type: string
         default: "8"
+    secrets:
+      SONAR_TOKEN:
+        required: true
+      SONAR_HOST_URL:
+        required: true
 
 jobs:
   sast:
