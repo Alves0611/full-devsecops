@@ -13,6 +13,8 @@ on:
         required: true
       EKS_CLUSTER_NAME:
         required: true
+      DOCKER_USERNAME:
+        required: true
 
 jobs:
   deployment:
@@ -47,7 +49,7 @@ jobs:
         env:
           NAMESPACE: ${{ vars.NAMESPACE }}
           REPLICAS: ${{ vars.REPLICAS }}
-          K8S_IMAGE: ${{ inputs.image-tag }}
+          K8S_IMAGE: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-tag }}
 
       - name: Deploy to Kubernetes
         run: |
