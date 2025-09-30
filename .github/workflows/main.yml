@@ -20,6 +20,9 @@ jobs:
     name: Docker Build and Push
     needs: testing
     uses: ./.github/workflows/docker.yml
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     with:
       app-jar: ${{ needs.testing.outputs.app-jar }}
 
@@ -27,5 +30,9 @@ jobs:
     name: Kubernetes Deployment
     needs: docker
     uses: ./.github/workflows/deployment.yml
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
     with:
       image-tag: ${{ needs.docker.outputs.image-tag }}
