@@ -9,23 +9,39 @@ on:
 jobs:
   security:
     name: Security Scanning
-    uses: ./.github/workflows/modules/security.yml
+    uses: ./.github/workflows/security.yml
 
   testing:
     name: Testing and Build
     needs: security
-    uses: ./.github/workflows/modules/testing.yml
+    uses: ./.github/workflows/testing.yml
+
+  sast:
+    name: SAST - Static Analysis
+    needs: testing
+    uses: ./.github/workflows/sonarqube.yml
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   docker:
     name: Docker Build and Push
-    needs: testing
-    uses: ./.github/workflows/modules/docker.yml
+    needs: sast
+    uses: ./.github/workflows/docker.yml
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     with:
       app-jar: ${{ needs.testing.outputs.app-jar }}
 
   deployment:
     name: Kubernetes Deployment
     needs: docker
-    uses: ./.github/workflows/modules/deployment.yml
+    uses: ./.github/workflows/deployment.yml
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
     with:
-      image-tag: ${{ needs.docker.outputs.image-tag }}
+      image-tag: "devsecops:${{ github.sha }}"
