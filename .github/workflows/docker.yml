@@ -20,7 +20,7 @@ on:
     outputs:
       image-tag:
         description: "Built Docker image tag"
-        value: ${{ secrets.DOCKER_USERNAME }}/devsecops:${{ github.sha }}
+        value: ${{ inputs.docker-username }}/devsecops:${{ github.sha }}
 
 jobs:
   docker:

@@ -25,6 +25,7 @@ jobs:
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     with:
       app-jar: ${{ needs.testing.outputs.app-jar }}
+      docker-username: ${{ secrets.DOCKER_USERNAME }}
 
   deployment:
     name: Kubernetes Deployment
