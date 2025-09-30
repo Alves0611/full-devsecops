@@ -6,12 +6,6 @@ on:
       app-jar:
         required: true
         type: string
-      docker-username:
-        required: true
-        type: string
-      docker-password:
-        required: true
-        type: string
     secrets:
       DOCKER_USERNAME:
         required: true
@@ -20,7 +14,7 @@ on:
     outputs:
       image-tag:
         description: "Built Docker image tag"
-        value: ${{ inputs.docker-username }}/devsecops:${{ github.sha }}
+        value: ${{ secrets.DOCKER_USERNAME }}/devsecops:${{ github.sha }}
 
 jobs:
   docker:
