@@ -7,10 +7,6 @@ on:
         required: false
         type: string
         default: "8"
-    outputs:
-      quality-gate-status:
-        description: "SonarQube Quality Gate Status"
-        value: ${{ steps.sonar-results.outputs.quality-gate-status }}
 
 jobs:
   sast:
