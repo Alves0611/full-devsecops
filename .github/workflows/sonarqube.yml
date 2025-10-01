@@ -62,7 +62,7 @@ jobs:
 
       - name: Wait for Quality Gate
         id: sonar-results
-        uses: SonarSource/sonarqube-quality-gate-action@v2.1.0
+        uses: SonarSource/sonarqube-quality-gate-action@master
         timeout-minutes: 5
         with:
           scanMetadataReportFile: target/sonar/report-task.txt
