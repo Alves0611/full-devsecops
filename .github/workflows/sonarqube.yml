@@ -35,6 +35,9 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      - name: Compile project
+        run: mvn clean compile
+
       - name: Download JaCoCo Coverage Reports
         uses: actions/download-artifact@v4
         with:
