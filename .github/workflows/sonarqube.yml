@@ -87,10 +87,3 @@ jobs:
             echo "❌ **Quality Gate:** FAILED" >> $GITHUB_STEP_SUMMARY
             echo "🚨 **Build Status:** Will fail due to quality gate failure" >> $GITHUB_STEP_SUMMARY
           fi
-
-      - name: Upload JAR artifact for Docker build
-        if: steps.sonar-results.outputs.quality-gate-status == 'PASSED'
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-jar
-          path: target/*.jar
