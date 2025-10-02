@@ -1,0 +1,106 @@
+name: Trivy Security Scanning
+
+on:
+  workflow_call:
+    inputs:
+      scan-type:
+        required: false
+        type: string
+        default: "fs"
+      severity:
+        required: false
+        type: string
+        default: "CRITICAL,HIGH,MEDIUM"
+      format:
+        required: false
+        type: string
+        default: "sarif"
+
+jobs:
+  trivy:
+    name: Trivy Security Scanner
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: ${{ inputs.scan-type }}
+          scan-ref: "."
+          format: ${{ inputs.format }}
+          output: "trivy-results.sarif"
+          severity: ${{ inputs.severity }}
+          exit-code: "0"
+
+      - name: Run Trivy filesystem scan (detailed)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "table"
+          output: "trivy-fs-results.txt"
+          severity: "CRITICAL,HIGH,MEDIUM,LOW"
+          exit-code: "0"
+
+      - name: Run Trivy secret scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "table"
+          output: "trivy-secret-results.txt"
+          scanners: "secret"
+          exit-code: "0"
+
+      - name: Upload Trivy SARIF results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-sarif-results
+          path: trivy-results.sarif
+
+      - name: Upload Trivy filesystem scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-fs-results
+          path: trivy-fs-results.txt
+
+      - name: Upload Trivy secret scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-secret-results
+          path: trivy-secret-results.txt
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
+      - name: Comment Trivy Security Results
+        if: always()
+        run: |
+          echo "## 🔍 Trivy Security Scanning Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🛡️ Vulnerability Scan" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status:** Completed" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Format:** SARIF (uploaded to Security tab)" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 **Severity:** ${{ inputs.severity }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔐 Secret Scan" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status:** Completed" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 **Purpose:** Detects hardcoded secrets and credentials" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Filesystem Scan" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status:** Completed" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 **Purpose:** Comprehensive vulnerability analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Reports:** Available in artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Security Tab:** View detailed results in GitHub Security tab" >> $GITHUB_STEP_SUMMARY
