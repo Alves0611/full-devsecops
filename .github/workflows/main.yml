@@ -6,6 +6,11 @@ on:
       - feature/*
   workflow_dispatch:
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
   security:
     name: Security Scanning
