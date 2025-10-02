@@ -105,6 +105,18 @@
 					<suppressionFiles>
 						<suppressionFile>owasp-dependency-check-suppressions.xml</suppressionFile>
 					</suppressionFiles>
+					<!-- Configuration to handle CI/CD environment issues -->
+					<retryCount>3</retryCount>
+					<connectionTimeout>30000</connectionTimeout>
+					<readTimeout>30000</readTimeout>
+					<dataDirectory>${user.home}/.dependency-check</dataDirectory>
+					<!-- Skip update if data is less than 24 hours old -->
+					<autoUpdate>true</autoUpdate>
+					<updateOnly>false</updateOnly>
+					<!-- Use local data if download fails -->
+					<nvdApiKey></nvdApiKey>
+					<enableRetired>false</enableRetired>
+					<enableExperimental>false</enableExperimental>
 				</configuration>
 			</plugin>
 			
