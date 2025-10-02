@@ -23,40 +23,6 @@ jobs:
         uses: carhartl/talisman-secrets-scan-action@v1.4.0
         continue-on-error: true
 
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          java-version: "8"
-          distribution: "adopt"
-
-      - name: Cache Maven dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-
-      - name: Cache OWASP Dependency-Check database
-        uses: actions/cache@v4
-        with:
-          path: ~/.dependency-check
-          key: ${{ runner.os }}-dependency-check-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-dependency-check-
-
-      - name: Run OWASP Dependency-Check
-        run: mvn dependency-check:check
-        continue-on-error: true
-
-      - name: Upload Dependency-Check Reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: dependency-check-reports
-          path: |
-            target/dependency-check-report.html
-            target/dependency-check-report.json
-            target/dependency-check-report.xml
-            target/dependency-check-report.csv
 
       - name: Comment Security Scan Results
         if: always()
@@ -66,12 +32,6 @@ jobs:
           echo "### 🔍 Talisman Secrets Detection" >> $GITHUB_STEP_SUMMARY
           echo "✅ **Status:** Completed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🛡️ OWASP Dependency-Check" >> $GITHUB_STEP_SUMMARY
-          if [ -f "target/dependency-check-report.html" ]; then
-            echo "✅ **Status:** Completed" >> $GITHUB_STEP_SUMMARY
-            echo "📊 **Reports:** Available in artifacts" >> $GITHUB_STEP_SUMMARY
-            echo "🔗 **HTML Report:** dependency-check-report.html" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ **Status:** Skipped (NVD rate limiting)" >> $GITHUB_STEP_SUMMARY
-            echo "ℹ️ **Note:** Using local data only due to CI/CD restrictions" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "### 🛡️ Vulnerability Scanning" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ **Note:** OWASP Dependency-Check disabled due to NVD rate limiting" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 **Alternative:** SonarQube provides vulnerability analysis in SAST stage" >> $GITHUB_STEP_SUMMARY
