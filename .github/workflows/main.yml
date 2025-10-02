@@ -11,9 +11,17 @@ jobs:
     name: Security Scanning
     uses: ./.github/workflows/security.yml
 
+  trivy:
+    name: Trivy Security Scanner
+    uses: ./.github/workflows/trivy.yml
+    with:
+      scan-type: "fs"
+      severity: "CRITICAL,HIGH,MEDIUM"
+      format: "sarif"
+
   testing:
     name: Testing and Build
-    needs: security
+    needs: [security, trivy]
     uses: ./.github/workflows/testing.yml
 
   sast:
