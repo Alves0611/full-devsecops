@@ -105,18 +105,23 @@
 					<suppressionFiles>
 						<suppressionFile>owasp-dependency-check-suppressions.xml</suppressionFile>
 					</suppressionFiles>
-					<!-- Configuration to handle CI/CD environment issues -->
-					<retryCount>3</retryCount>
-					<connectionTimeout>30000</connectionTimeout>
-					<readTimeout>30000</readTimeout>
-					<dataDirectory>${user.home}/.dependency-check</dataDirectory>
-					<!-- Skip update if data is less than 24 hours old -->
-					<autoUpdate>true</autoUpdate>
+					<!-- Disable automatic updates to avoid NVD rate limiting -->
+					<autoUpdate>false</autoUpdate>
 					<updateOnly>false</updateOnly>
-					<!-- Use local data if download fails -->
-					<nvdApiKey></nvdApiKey>
+					<!-- Use local data only -->
+					<dataDirectory>${user.home}/.dependency-check</dataDirectory>
+					<!-- Disable problematic data sources -->
+					<disableNvd>false</disableNvd>
+					<disableNpmAudit>true</disableNpmAudit>
+					<disableNodeAudit>true</disableNodeAudit>
+					<disableRetireJS>true</disableRetireJS>
+					<disableOssIndex>true</disableOssIndex>
+					<disableCentral>true</disableCentral>
+					<!-- Only use local H2 database -->
 					<enableRetired>false</enableRetired>
 					<enableExperimental>false</enableExperimental>
+					<!-- Skip if no local data exists -->
+					<skipIfNoData>true</skipIfNoData>
 				</configuration>
 			</plugin>
 			

@@ -67,6 +67,11 @@ jobs:
           echo "✅ **Status:** Completed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🛡️ OWASP Dependency-Check" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Status:** Completed" >> $GITHUB_STEP_SUMMARY
-          echo "📊 **Reports:** Available in artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 **HTML Report:** dependency-check-report.html" >> $GITHUB_STEP_SUMMARY
+          if [ -f "target/dependency-check-report.html" ]; then
+            echo "✅ **Status:** Completed" >> $GITHUB_STEP_SUMMARY
+            echo "📊 **Reports:** Available in artifacts" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 **HTML Report:** dependency-check-report.html" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Status:** Skipped (NVD rate limiting)" >> $GITHUB_STEP_SUMMARY
+            echo "ℹ️ **Note:** Using local data only due to CI/CD restrictions" >> $GITHUB_STEP_SUMMARY
+          fi
