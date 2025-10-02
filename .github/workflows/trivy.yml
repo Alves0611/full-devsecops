@@ -16,6 +16,11 @@ on:
         type: string
         default: "sarif"
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
   trivy:
     name: Trivy Security Scanner
@@ -28,7 +33,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v3
         with:
           scan-type: ${{ inputs.scan-type }}
           scan-ref: "."
@@ -38,7 +43,7 @@ jobs:
           exit-code: "0"
 
       - name: Run Trivy filesystem scan (detailed)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v3
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -48,7 +53,7 @@ jobs:
           exit-code: "0"
 
       - name: Run Trivy secret scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v3
         with:
           scan-type: "fs"
           scan-ref: "."
