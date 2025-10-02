@@ -22,3 +22,13 @@ jobs:
       - name: Detect secrets with Talisman in incoming commits
         uses: carhartl/talisman-secrets-scan-action@v1.4.0
         continue-on-error: true
+
+
+      - name: Comment Security Scan Results
+        if: always()
+        run: |
+          echo "## 🔒 Security Scanning Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 Talisman Secrets Detection" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status:** Completed" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 **Purpose:** Detects secrets and sensitive data in commits" >> $GITHUB_STEP_SUMMARY
