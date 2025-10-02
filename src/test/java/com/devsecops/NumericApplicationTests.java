@@ -1,30 +1,17 @@
 package com.devsecops;
 
-
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.web.servlet.MockMvc;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-//import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.web.servlet.MockMvc;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-//import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -35,21 +22,58 @@ public class NumericApplicationTests {
     private MockMvc mockMvc;
 
     @Test
-    public void smallerThanOrEqualToFiftyMessage() throws Exception {
-        this.mockMvc.perform(get("/compare/49")).andDo(print()).andExpect(status().isOk())
+    public void welcomeMessage() throws Exception {
+        this.mockMvc.perform(get("/"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("Kubernetes DevSecOps"));
+    }
+
+    @Test
+    public void smallerThanFiftyMessage() throws Exception {
+        this.mockMvc.perform(get("/compare/49"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("Smaller than or equal to 50"));
+    }
+
+    @Test
+    public void equalToFiftyMessage() throws Exception {
+        this.mockMvc.perform(get("/compare/50"))
+                .andDo(print())
+                .andExpect(status().isOk())
                 .andExpect(content().string("Smaller than or equal to 50"));
     }
 
     @Test
     public void greaterThanFiftyMessage() throws Exception {
-        this.mockMvc.perform(get("/compare/51")).andDo(print()).andExpect(status().isOk())
+        this.mockMvc.perform(get("/compare/51"))
+                .andDo(print())
+                .andExpect(status().isOk())
                 .andExpect(content().string("Greater than 50"));
     }
-    
-    @Test
-    public void welcomeMessage() throws Exception {
-         this.mockMvc.perform(get("/")).andDo(print()).andExpect(status().isOk());
-    }
-    
 
+    @Test
+    public void boundaryValueZero() throws Exception {
+        this.mockMvc.perform(get("/compare/0"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("Smaller than or equal to 50"));
+    }
+
+    @Test
+    public void boundaryValueOneHundred() throws Exception {
+        this.mockMvc.perform(get("/compare/100"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("Greater than 50"));
+    }
+
+    @Test
+    public void negativeValue() throws Exception {
+        this.mockMvc.perform(get("/compare/-1"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("Smaller than or equal to 50"));
+    }
 }

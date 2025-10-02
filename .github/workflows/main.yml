@@ -26,7 +26,7 @@ jobs:
 
   docker:
     name: Docker Build and Push
-    needs: sast
+    needs: [testing, sast]
     uses: ./.github/workflows/docker.yml
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
