@@ -1,0 +1,89 @@
+name: SAST - Static Application Security Testing
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        required: false
+        type: string
+        default: "8"
+    secrets:
+      SONAR_TOKEN:
+        required: true
+      SONAR_HOST_URL:
+        required: true
+
+jobs:
+  sast:
+    name: SonarQube Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: "17"
+          distribution: "adopt"
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Compile and test project
+        run: mvn clean compile test
+
+      - name: Download JaCoCo Coverage Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: jacoco-coverage-report
+          path: target/site/jacoco/
+
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: target/
+
+      - name: Run SonarQube Analysis
+        id: sonar-analysis
+        run: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=full-devsecops \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.java.binaries=target/classes \
+            -Dsonar.sources=src/main/java \
+            -Dsonar.tests=src/test/java \
+            -Dsonar.java.test.binaries=target/test-classes
+
+      - name: Wait for Quality Gate
+        id: sonar-results
+        uses: SonarSource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        with:
+          scanMetadataReportFile: target/sonar/report-task.txt
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Comment Quality Gate Results
+        if: always()
+        run: |
+          echo "## 🔍 SonarQube SAST Analysis Results" >> $GITHUB_STEP_SUMMARY
+          echo "**Quality Gate Status:** ${{ steps.sonar-results.outputs.quality-gate-status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Project:** [full-devsecops](${{ secrets.SONAR_HOST_URL }}/dashboard?id=full-devsecops)" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 **Analysis Report:** [View Details](${{ secrets.SONAR_HOST_URL }}/dashboard?id=full-devsecops)" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.sonar-results.outputs.quality-gate-status }}" = "PASSED" ]; then
+            echo "✅ **Quality Gate:** PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Quality Gate:** FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "🚨 **Build Status:** Will fail due to quality gate failure" >> $GITHUB_STEP_SUMMARY
+          fi

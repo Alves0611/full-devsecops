@@ -16,9 +16,17 @@ jobs:
     needs: security
     uses: ./.github/workflows/testing.yml
 
+  sast:
+    name: SAST - Static Analysis
+    needs: testing
+    uses: ./.github/workflows/sonarqube.yml
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
   docker:
     name: Docker Build and Push
-    needs: testing
+    needs: [testing, sast]
     uses: ./.github/workflows/docker.yml
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
