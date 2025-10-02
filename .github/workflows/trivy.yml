@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v3
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: ${{ inputs.scan-type }}
           scan-ref: "."
@@ -43,7 +43,7 @@ jobs:
           exit-code: "0"
 
       - name: Run Trivy filesystem scan (detailed)
-        uses: aquasecurity/trivy-action@v3
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -53,7 +53,7 @@ jobs:
           exit-code: "0"
 
       - name: Run Trivy secret scan
-        uses: aquasecurity/trivy-action@v3
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: "fs"
           scan-ref: "."
