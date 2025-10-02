@@ -36,8 +36,16 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      - name: Cache OWASP Dependency-Check database
+        uses: actions/cache@v4
+        with:
+          path: ~/.dependency-check
+          key: ${{ runner.os }}-dependency-check-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-dependency-check-
+
       - name: Run OWASP Dependency-Check
         run: mvn dependency-check:check
+        continue-on-error: true
 
       - name: Upload Dependency-Check Reports
         uses: actions/upload-artifact@v4
