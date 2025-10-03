@@ -87,5 +87,5 @@ jobs:
 
       - name: Verify deployment
         run: |
-          kubectl get all -l app=devsecops
-          kubectl rollout history deploy devsecops
+          kubectl -n devsecops get all -l app=devsecops
+          kubectl -n devsecops rollout history deploy devsecops
