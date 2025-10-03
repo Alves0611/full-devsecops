@@ -51,6 +51,41 @@ jobs:
           REPLICAS: ${{ vars.REPLICAS }}
           K8S_IMAGE: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-tag }}
 
-      - name: Deploy to Kubernetes
+      - name: Vulnerability Scan - Kubernetes
         run: |
-          kubectl apply -f kubernetes/
+          docker run --rm -v $(pwd):/project openpolicyagent/conftest test --policy opa-policies/opa-k8s-security.rego kubernetes/deployment.yml kubernetes/service.yml
+
+      - name: Set environment variables
+        run: |
+          echo "DEPLOYMENT_NAME=devsecops" >> $GITHUB_ENV
+          echo "CONTAINER_NAME=devsecops-container" >> $GITHUB_ENV
+          echo "IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-tag }}" >> $GITHUB_ENV
+
+      - name: K8S Deployment (Parallel)
+        run: |
+          # Run deployment and rollout status in parallel
+          echo "Starting Deployment branch..."
+          bash scripts/k8s-deployment.sh &
+          DEPLOY_PID=$!
+
+          echo "Starting Rollout_Status branch..."
+          sleep 5
+          bash scripts/k8s-deployment-rollout-status.sh &
+          ROLLOUT_PID=$!
+
+          # Wait for both processes
+          wait $DEPLOY_PID
+          DEPLOY_EXIT_CODE=$?
+          wait $ROLLOUT_PID
+          ROLLOUT_EXIT_CODE=$?
+
+          # Exit with error if any branch failed
+          if [ $DEPLOY_EXIT_CODE -ne 0 ] || [ $ROLLOUT_EXIT_CODE -ne 0 ]; then
+            echo "One or both branches failed"
+            exit 1
+          fi
+
+      - name: Verify deployment
+        run: |
+          kubectl get all -l app=devsecops
+          kubectl rollout history deploy devsecops
