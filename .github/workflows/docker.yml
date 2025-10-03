@@ -66,7 +66,7 @@ jobs:
         uses: instrumenta/conftest-action@v0.4.0
         with:
           files: Dockerfile
-          policy: opa-policies
+          policy: opa-policies/docker-security.rego
           namespace: main
           output: stdout
 
