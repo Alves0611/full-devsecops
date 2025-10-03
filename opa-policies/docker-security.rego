@@ -28,8 +28,15 @@ deny[msg] {
 deny[msg] {
   input[i].Cmd == "run"
   val = lower(concat(" ", input[i].Value))
-  contains(val, "curl") || contains(val, "wget")
-  msg = sprintf("Line %d: Avoid curl/wget in RUN", [i])
+  contains(val, "curl")
+  msg = sprintf("Line %d: Avoid curl in RUN", [i])
+}
+
+deny[msg] {
+  input[i].Cmd == "run"
+  val = lower(concat(" ", input[i].Value))
+  contains(val, "wget")
+  msg = sprintf("Line %d: Avoid wget in RUN", [i])
 }
 
 # 5. No system upgrades in RUN
