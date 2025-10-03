@@ -32,9 +32,61 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Docker image
+      - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
+          push: false
           tags: ${{ secrets.DOCKER_USERNAME }}/devsecops:${{ github.sha }}
+          load: true
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: "${{ secrets.DOCKER_USERNAME }}/devsecops:${{ github.sha }}"
+          format: "sarif"
+          output: "trivy-image-results.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "0"
+
+      - name: Upload Trivy image scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-image-scan-results
+          path: trivy-image-results.sarif
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-image-results.sarif"
+
+      - name: Push Docker image (only if scan passes)
+        if: success()
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/devsecops:${{ github.sha }}
+
+      - name: Comment Docker Security Results
+        if: always()
+        run: |
+          echo "## 🐳 Docker Security Scanning Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🛡️ Trivy Image Scan" >> $GITHUB_STEP_SUMMARY
+          if [ -f "trivy-image-results.sarif" ]; then
+            echo "✅ **Status:** Completed" >> $GITHUB_STEP_SUMMARY
+            echo "📊 **Format:** SARIF (uploaded to Security tab)" >> $GITHUB_STEP_SUMMARY
+            echo "🔍 **Severity:** CRITICAL, HIGH" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 **Security Tab:** View detailed results in GitHub Security tab" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Status:** Failed" >> $GITHUB_STEP_SUMMARY
+            echo "🚨 **Action:** Image not pushed due to security issues" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Docker Image" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ **Status:** Built and pushed successfully" >> $GITHUB_STEP_SUMMARY
+            echo "🏷️ **Tag:** ${{ secrets.DOCKER_USERNAME }}/devsecops:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Status:** Build or push failed" >> $GITHUB_STEP_SUMMARY
+          fi
