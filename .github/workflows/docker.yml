@@ -62,6 +62,13 @@ jobs:
         with:
           sarif_file: "trivy-image-results.sarif"
 
+      - name: Scan Dockerfile with OPA Conftest
+        uses: openpolicyagent/conftest-action@v1
+        with:
+          files: Dockerfile
+          policy: opa-policies
+          fail-on-warn: true
+
       - name: Push Docker image (only if scan passes)
         if: success()
         run: |
@@ -81,6 +88,15 @@ jobs:
           else
             echo "❌ **Status:** Failed" >> $GITHUB_STEP_SUMMARY
             echo "🚨 **Action:** Image not pushed due to security issues" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔒 OPA Conftest Policy Scan" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ **Status:** All policies passed" >> $GITHUB_STEP_SUMMARY
+            echo "📋 **Policies:** Dockerfile security best practices validated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Status:** Policy violations detected" >> $GITHUB_STEP_SUMMARY
+            echo "🚨 **Action:** Review Dockerfile security issues" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 Docker Image" >> $GITHUB_STEP_SUMMARY
