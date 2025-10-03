@@ -73,7 +73,9 @@ jobs:
       - name: Scan Kubernetes manifests with OPA Conftest
         uses: instrumenta/conftest-action@v0.4.0
         with:
-          files: kubernetes/deployment.yml kubernetes/service.yml
+          files: |
+            kubernetes/deployment.yml
+            kubernetes/service.yml
           policy: opa-policies/opa-k8s-security.rego
           namespace: main
           output: stdout
