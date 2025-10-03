@@ -53,7 +53,7 @@ jobs:
 
       - name: Vulnerability Scan - Kubernetes
         run: |
-          docker run --rm -v $(pwd):/project openpolicyagent/conftest test --policy opa-policies/opa-k8s-security.rego kubernetes/deployment.yml kubernetes/service.yml
+          docker run --rm -v $(pwd):/project openpolicyagent/conftest:v0.45.0 test --policy opa-policies/opa-k8s-security.rego kubernetes/deployment.yml kubernetes/service.yml
 
       - name: Set environment variables
         run: |
