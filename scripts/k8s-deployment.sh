@@ -13,10 +13,10 @@ echo "Image: $imageName"
 sed -i "s|_{_K8S_IMAGE_}_|${imageName}|g" kubernetes/deployment.yml
 
 # Check if deployment exists
-if ! kubectl -n default get deployment "${deploymentName}" > /dev/null 2>&1; then
+if ! kubectl -n devsecops get deployment "${deploymentName}" > /dev/null 2>&1; then
     echo "Creating deployment ${deploymentName}"
-    kubectl -n default apply -f kubernetes/
+    kubectl -n devsecops apply -f kubernetes/
 else
     echo "Updating image for ${deploymentName} to ${imageName}"
-    kubectl -n default set image deploy "${deploymentName}" "${containerName}"="${imageName}" --record=true
+    kubectl -n devsecops set image deploy "${deploymentName}" "${containerName}"="${imageName}" --record=true
 fi
