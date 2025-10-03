@@ -18,5 +18,7 @@ if ! kubectl -n devsecops get deployment "${deploymentName}" > /dev/null 2>&1; t
     kubectl -n devsecops apply -f kubernetes/
 else
     echo "Updating image for ${deploymentName} to ${imageName}"
-    kubectl -n devsecops set image deploy "${deploymentName}" "${containerName}"="${imageName}" --record=true
+    kubectl -n devsecops set image deploy "${deploymentName}" "${containerName}"="${imageName}"
+    echo "Forcing rollout restart to ensure new image is used..."
+    kubectl -n devsecops rollout restart deploy "${deploymentName}"
 fi
