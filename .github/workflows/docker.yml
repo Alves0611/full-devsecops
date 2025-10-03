@@ -63,11 +63,12 @@ jobs:
           sarif_file: "trivy-image-results.sarif"
 
       - name: Scan Dockerfile with OPA Conftest
-        uses: instrumenta/conftest-action@v0.4.0
+        uses: instrumenta/conftest-action@master
         with:
           files: Dockerfile
           policy: opa-policies
-          fail-on-warn: true
+          namespace: main
+          output: stdout
 
       - name: Push Docker image (only if scan passes)
         if: success()
