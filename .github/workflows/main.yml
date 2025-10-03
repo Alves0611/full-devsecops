@@ -48,7 +48,7 @@ jobs:
       app-jar: ${{ needs.testing.outputs.app-jar }}
 
   deployment:
-    name: Kubernetes Deployment
+    name: Kubernetes Deployment with Rollout
     needs: docker
     uses: ./.github/workflows/deployment.yml
     secrets:
