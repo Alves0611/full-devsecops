@@ -63,10 +63,18 @@ jobs:
           sarif_file: "trivy-image-results.sarif"
 
       - name: Scan Dockerfile with OPA Conftest
-        uses: instrumenta/conftest-action@master
+        uses: instrumenta/conftest-action@v0.4.0
         with:
           files: Dockerfile
           policy: opa-policies
+          namespace: main
+          output: stdout
+
+      - name: Scan Kubernetes manifests with OPA Conftest
+        uses: instrumenta/conftest-action@v0.4.0
+        with:
+          files: kubernetes/deployment.yml kubernetes/service.yml
+          policy: opa-policies/opa-k8s-security.rego
           namespace: main
           output: stdout
 
@@ -94,10 +102,14 @@ jobs:
           echo "### 🔒 OPA Conftest Policy Scan" >> $GITHUB_STEP_SUMMARY
           if [ "${{ job.status }}" = "success" ]; then
             echo "✅ **Status:** All policies passed" >> $GITHUB_STEP_SUMMARY
-            echo "📋 **Policies:** Dockerfile security best practices validated" >> $GITHUB_STEP_SUMMARY
+            echo "📋 **Dockerfile Policies:** Security best practices validated" >> $GITHUB_STEP_SUMMARY
+            echo "📋 **Kubernetes Policies:** Security configurations validated" >> $GITHUB_STEP_SUMMARY
+            echo "🛡️ **Security Rules:**" >> $GITHUB_STEP_SUMMARY
+            echo "   - Service type: NodePort ✓" >> $GITHUB_STEP_SUMMARY
+            echo "   - Containers run as non-root ✓" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Status:** Policy violations detected" >> $GITHUB_STEP_SUMMARY
-            echo "🚨 **Action:** Review Dockerfile security issues" >> $GITHUB_STEP_SUMMARY
+            echo "🚨 **Action:** Review security policy violations" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 Docker Image" >> $GITHUB_STEP_SUMMARY
