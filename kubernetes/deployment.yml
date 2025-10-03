@@ -20,3 +20,5 @@ spec:
           name: devsecops-container
           ports:
             - containerPort: 8080
+          securityContext:
+            runAsNonRoot: true
