@@ -28,8 +28,7 @@ deny[msg] {
 deny[msg] {
   input[i].Cmd == "run"
   val = lower(concat(" ", input[i].Value))
-  matches = regex.find_all("(curl|wget)[^ ]*", val, -1)
-  count(matches) > 0
+  contains(val, "curl") || contains(val, "wget")
   msg = sprintf("Line %d: Avoid curl/wget in RUN", [i])
 }
 
