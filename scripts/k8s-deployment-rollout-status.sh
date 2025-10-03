@@ -11,9 +11,9 @@ sleep 60s
 
 # Monitor rollout with a 5-second timeout
 echo "Checking rollout status..."
-if ! kubectl -n default rollout status deploy "${deploymentName}" --timeout=5s | grep -q "successfully rolled out"; then
+if ! kubectl -n devsecops rollout status deploy "${deploymentName}" --timeout=5s | grep -q "successfully rolled out"; then
     echo "Rollout FAILED; rolling back ${deploymentName}"
-    kubectl -n default rollout undo deploy "${deploymentName}"
+    kubectl -n devsecops rollout undo deploy "${deploymentName}"
     echo "Rollback completed"
     exit 1
 else
