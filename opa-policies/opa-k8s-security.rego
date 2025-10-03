@@ -1,13 +1,13 @@
 package main
 
-deny[msg] {
+deny[msg] if {
   input.kind == "Service"
   not input.spec.type == "NodePort"
-  msg = "Service type should be NodePort"
+  msg := "Service type should be NodePort"
 }
 
-deny[msg] {
+deny[msg] if {
   input.kind == "Deployment"
   not input.spec.template.spec.containers[0].securityContext.runAsNonRoot
-  msg = "Containers must not run as root - set runAsNonRoot: true"
+  msg := "Containers must not run as root - set runAsNonRoot: true"
 }
