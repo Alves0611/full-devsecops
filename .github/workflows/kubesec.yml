@@ -1,0 +1,38 @@
+name: Kubesec Security Scan
+
+on:
+  workflow_call:
+    inputs:
+      manifest-file:
+        description: "Kubernetes manifest file to scan"
+        required: false
+        default: "kubernetes/deployment.yml"
+        type: string
+
+jobs:
+  kubesec-scan:
+    name: Kubesec Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Run Kubesec Security Scan
+        run: |
+          echo "🔍 Running Kubesec security scan on: ${{ inputs.manifest-file }}"
+          bash scripts/kubesec-scan.sh ${{ inputs.manifest-file }}
+
+      - name: Comment Kubesec Results
+        if: always()
+        run: |
+          echo "## 🔍 Kubesec Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "**Manifest:** ${{ inputs.manifest-file }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Kubesec scan completed successfully!" >> $GITHUB_STEP_SUMMARY

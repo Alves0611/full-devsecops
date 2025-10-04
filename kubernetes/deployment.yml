@@ -14,7 +14,9 @@ spec:
     metadata:
       labels:
         app: devsecops
+      annotations: {}
     spec:
+      serviceAccountName: default
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
@@ -25,6 +27,14 @@ spec:
           ports:
             - containerPort: 8080
           securityContext:
+            runAsNonRoot: true
             runAsUser: 1000
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false
+            readOnlyRootFilesystem: true
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"

@@ -26,3 +26,7 @@ bin
 .classpath
 .project
 target
+
+helm/
+kubernetes/sonar-loadbalancer.yml
+kubernetes/postgres-deployment.yaml
