@@ -37,14 +37,24 @@ fi
 
 echo "📡 Service NodePort: $PORT"
 
-# Construct the full URL
-URL="${applicationURL}:${PORT}${applicationURI}"
+# Use port-forward to access the service
+echo "🔗 Setting up port-forward to service..."
+kubectl -n devsecops port-forward svc/${serviceName} 8080:8080 &
+PORT_FORWARD_PID=$!
+
+# Wait for port-forward to be ready
+echo "⏳ Waiting for port-forward to be ready..."
+sleep 10s
+
+# Test URL using localhost with port-forward
+URL="http://localhost:8080${applicationURI}"
 echo "🎯 Testing endpoint: $URL"
 
 # Test 1: Check if service is responding (basic connectivity)
 echo "🔗 Testing basic connectivity..."
 if ! curl -s --connect-timeout 10 --max-time 30 "$URL" > /dev/null; then
   echo "❌ Connectivity Test Failed: Cannot reach $URL"
+  kill $PORT_FORWARD_PID 2>/dev/null || true
   exit 1
 else
   echo "✅ Connectivity Test Passed"
@@ -56,6 +66,7 @@ response=$(curl -s --connect-timeout 10 --max-time 30 "$URL")
 
 if [[ "$response" != "100" ]]; then
   echo "❌ Payload Test Failed: expected 100, got '$response'"
+  kill $PORT_FORWARD_PID 2>/dev/null || true
   exit 1
 else
   echo "✅ Payload Test Passed: got $response"
@@ -67,6 +78,7 @@ http_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-ti
 
 if [[ "$http_code" != "200" ]]; then
   echo "❌ HTTP Status Test Failed: expected 200, got $http_code"
+  kill $PORT_FORWARD_PID 2>/dev/null || true
   exit 1
 else
   echo "✅ HTTP Status Test Passed: got $http_code"
@@ -81,6 +93,10 @@ if [[ -n "$content_type" ]]; then
 else
   echo "⚠️  Response Headers Test: No content-type header found"
 fi
+
+# Clean up port-forward
+echo "🧹 Cleaning up port-forward..."
+kill $PORT_FORWARD_PID 2>/dev/null || true
 
 echo "🎉 All Integration Tests Passed!"
 echo "✅ Service is healthy and responding correctly"
