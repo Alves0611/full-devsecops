@@ -21,6 +21,9 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}
       containers:
         - image: _{_K8S_IMAGE_}_
           name: devsecops-container
@@ -31,6 +34,9 @@ spec:
             runAsUser: 1000
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
           resources:
             limits:
               cpu: "500m"
