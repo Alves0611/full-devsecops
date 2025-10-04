@@ -18,6 +18,13 @@ on:
         required: false
         default: "/increment/99"
         type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      EKS_CLUSTER_NAME:
+        required: true
 
 jobs:
   integration-tests:
