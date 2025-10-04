@@ -75,6 +75,6 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
     with:
-      service-name: "devsecops"
+      service-name: "devsecops-svc"
       application-url: "http://localhost"
       application-uri: "/increment/99"
