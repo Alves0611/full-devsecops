@@ -29,13 +29,14 @@ jobs:
           bash scripts/kubesec-scan.sh ${{ inputs.manifest-directory }}/deployment.yml
 
       - name: Trivy Kubernetes Scan
-        uses: aquasec/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.28.0
         with:
-          scan-type: "k8s"
+          scan-type: "fs"
           scan-ref: "${{ inputs.manifest-directory }}"
           format: "sarif"
           output: "trivy-k8s-results.sarif"
           severity: "HIGH,CRITICAL"
+          scanners: "vuln,misconfig"
 
       - name: Upload Trivy K8s results
         uses: actions/upload-artifact@v4
