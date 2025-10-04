@@ -47,9 +47,16 @@ jobs:
     with:
       app-jar: ${{ needs.testing.outputs.app-jar }}
 
+  kubesec:
+    name: Kubesec Security Scan
+    needs: docker
+    uses: ./.github/workflows/kubesec.yml
+    with:
+      manifest-file: "kubernetes/deployment.yml"
+
   deployment:
     name: Kubernetes Deployment with Rollout
-    needs: docker
+    needs: [docker, kubesec]
     uses: ./.github/workflows/deployment.yml
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
