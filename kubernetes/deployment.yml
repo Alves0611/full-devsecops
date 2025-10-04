@@ -14,9 +14,7 @@ spec:
     metadata:
       labels:
         app: devsecops
-      annotations:
-        container.apparmor.security.beta.kubernetes.io/devsecops-container: runtime/default
-        container.seccomp.security.alpha.kubernetes.io/devsecops-container: runtime/default
+      annotations: {}
     spec:
       serviceAccountName: default
       securityContext:
