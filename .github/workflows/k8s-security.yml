@@ -1,0 +1,43 @@
+name: Kubernetes Security Scan
+
+on:
+  workflow_call:
+    inputs:
+      manifest-directory:
+        description: "Directory containing Kubernetes manifests"
+        required: false
+        default: "kubernetes"
+        type: string
+
+jobs:
+  k8s-security-scan:
+    name: Kubernetes Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Kubesec Security Scan
+        run: |
+          echo "🔍 Running Kubesec security scan..."
+          bash scripts/kubesec-scan.sh ${{ inputs.manifest-directory }}/deployment.yml
+
+      - name: Trivy Kubernetes Scan
+        run: |
+          echo "🔍 Running Trivy Kubernetes manifests scan..."
+          bash scripts/trivy-k8s-scan.sh ${{ inputs.manifest-directory }}
+
+      - name: Comment Security Results
+        if: always()
+        run: |
+          echo "## 🛡️ Kubernetes Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "**Manifest Directory:** ${{ inputs.manifest-directory }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Security scans completed successfully!" >> $GITHUB_STEP_SUMMARY
