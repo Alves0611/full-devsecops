@@ -5,6 +5,7 @@ set -euo pipefail
 # Usage: ./kubesec-scan.sh [manifest-file]
 
 MANIFEST_FILE="${1:-kubernetes/deployment.yml}"
+TEMP_FILE="/tmp/kubesec-scan-$(date +%s).yml"
 
 echo "🔍 Running Kubesec scan on: $MANIFEST_FILE"
 
@@ -14,9 +15,19 @@ if [[ ! -f "$MANIFEST_FILE" ]]; then
   exit 1
 fi
 
+# Create temporary file with placeholders replaced for Kubesec scan
+echo "🔄 Creating temporary manifest with real values for Kubesec scan..."
+sed -e "s|_{_NAMESPACE_}_|default|g" \
+    -e "s|_{_REPLICAS_}_|2|g" \
+    -e "s|_{_K8S_IMAGE_}_|nginx:latest|g" \
+    "$MANIFEST_FILE" > "$TEMP_FILE"
+
 # Run Kubesec scan via HTTP API
 echo "📡 Sending manifest to Kubesec API..."
-scan_result=$(curl -sSX POST --data-binary @"$MANIFEST_FILE" https://v2.kubesec.io/scan)
+scan_result=$(curl -sSX POST --data-binary @"$TEMP_FILE" https://v2.kubesec.io/scan)
+
+# Clean up temporary file
+rm -f "$TEMP_FILE"
 
 # Extract score and message
 scan_score=$(echo "$scan_result" | jq -r '.[0].score // 0')
