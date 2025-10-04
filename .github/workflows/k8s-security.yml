@@ -29,9 +29,26 @@ jobs:
           bash scripts/kubesec-scan.sh ${{ inputs.manifest-directory }}/deployment.yml
 
       - name: Trivy Kubernetes Scan
-        run: |
-          echo "🔍 Running Trivy Kubernetes manifests scan..."
-          bash scripts/trivy-k8s-scan.sh ${{ inputs.manifest-directory }}
+        uses: aquasec/trivy-action@0.28.0
+        with:
+          scan-type: "k8s"
+          scan-ref: "${{ inputs.manifest-directory }}"
+          format: "sarif"
+          output: "trivy-k8s-results.sarif"
+          severity: "HIGH,CRITICAL"
+
+      - name: Upload Trivy K8s results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-k8s-scan-results
+          path: trivy-k8s-results.sarif
+
+      - name: Upload Trivy K8s results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-k8s-results.sarif"
 
       - name: Comment Security Results
         if: always()
