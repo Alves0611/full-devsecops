@@ -85,8 +85,6 @@ jobs:
           fail_action: false
           issue_title: "OWASP ZAP Security Report"
           allow_issue_writing: false
-          rules_file_name: ".zap/rules.tsv"
-          cmd_options: "-a"
 
       - name: OWASP ZAP Full Scan
         uses: zaproxy/action-full-scan@v0.7.0
@@ -95,8 +93,6 @@ jobs:
           fail_action: false
           issue_title: "OWASP ZAP Full Scan Report"
           allow_issue_writing: false
-          rules_file_name: ".zap/rules.tsv"
-          cmd_options: "-a"
 
       - name: Cleanup port-forward
         if: always()
