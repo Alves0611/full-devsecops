@@ -1,0 +1,44 @@
+name: Slack Notification
+
+on:
+  workflow_call:
+    inputs:
+      channel:
+        description: "Slack channel to send notification"
+        required: false
+        default: "github-actions-channel"
+        type: string
+      message:
+        description: "Custom message for the notification"
+        required: false
+        default: ":hammer_and_wrench: DevSecOps Pipeline completed"
+        type: string
+      title:
+        description: "Title for the notification"
+        required: false
+        default: "Pipeline Status"
+        type: string
+      icon:
+        description: "Icon URL for the notification"
+        required: false
+        default: ""
+        type: string
+    secrets:
+      SLACK_WEBHOOK_URL:
+        required: true
+
+jobs:
+  slack-notification:
+    if: always()
+    name: Slack Notification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_CHANNEL: ${{ inputs.channel }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_ICON: ${{ inputs.icon }}
+          SLACK_MESSAGE: "${{ inputs.message }} - Triggered by ${{ github.actor }}"
+          SLACK_TITLE: ${{ inputs.title }}

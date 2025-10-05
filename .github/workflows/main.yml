@@ -91,3 +91,24 @@ jobs:
       service-name: "devsecops-svc"
       application-url: "http://localhost"
       application-uri: "/v3/api-docs"
+
+  slack-notification:
+    name: Slack Notification
+    needs:
+      [
+        security,
+        trivy,
+        testing,
+        docker,
+        k8s-security,
+        deployment,
+        integration-tests,
+        owasp-zap,
+      ]
+    uses: ./.github/workflows/slack-notification.yml
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    with:
+      channel: "github-actions-channel"
+      message: ":hammer_and_wrench: DevSecOps Pipeline completed"
+      title: "Pipeline Status"
