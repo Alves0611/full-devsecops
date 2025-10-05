@@ -78,6 +78,14 @@ jobs:
             fi
           done
 
+      - name: Setup ZAP workspace permissions
+        run: |
+          echo "🔧 Setting up ZAP workspace permissions..."
+          sudo chown -R runner:runner $GITHUB_WORKSPACE
+          chmod -R 755 $GITHUB_WORKSPACE
+          mkdir -p $GITHUB_WORKSPACE/zap-reports
+          chmod 777 $GITHUB_WORKSPACE/zap-reports
+
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
         with:
@@ -87,7 +95,7 @@ jobs:
           allow_issue_writing: false
 
       - name: OWASP ZAP Full Scan
-        uses: zaproxy/action-full-scan@v0.7.0
+        uses: zaproxy/action-full-scan@v0.12.0
         with:
           target: "${{ inputs.application-url }}:8080"
           fail_action: false
