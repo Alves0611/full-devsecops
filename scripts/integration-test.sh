@@ -20,6 +20,29 @@ echo "Container: $containerName"
 echo "⏳ Waiting 30 seconds for pods to be ready..."
 sleep 30s
 
+# Check pod status
+echo "🔍 Checking pod status..."
+kubectl -n devsecops get pods -l app=devsecops
+
+# Check pod logs to see if app is starting
+echo "📋 Checking pod logs..."
+kubectl -n devsecops logs -l app=devsecops --tail=20
+
+# Wait for pods to be in Running state
+echo "⏳ Waiting for pods to be in Running state..."
+kubectl -n devsecops wait --for=condition=Ready pod -l app=devsecops --timeout=180s
+
+# Check if pods are actually running
+echo "🔍 Final pod status check..."
+kubectl -n devsecops get pods -l app=devsecops -o wide
+
+# Check if any pods are in CrashLoopBackOff or Error state
+if kubectl -n devsecops get pods -l app=devsecops --field-selector=status.phase!=Running --no-headers | grep -v "Running"; then
+  echo "❌ Some pods are not in Running state"
+  kubectl -n devsecops describe pods -l app=devsecops
+  exit 1
+fi
+
 # Check if service exists
 if ! kubectl -n devsecops get svc "${serviceName}" > /dev/null 2>&1; then
   echo "❌ Error: Service ${serviceName} not found in namespace devsecops"
@@ -44,7 +67,25 @@ PORT_FORWARD_PID=$!
 
 # Wait for port-forward to be ready
 echo "⏳ Waiting for port-forward to be ready..."
-sleep 10s
+sleep 20s
+
+# Test if port-forward is working with retry
+echo "🔍 Testing port-forward connectivity..."
+for i in {1..5}; do
+  if nc -z localhost 8080; then
+    echo "✅ Port-forward is working"
+    break
+  else
+    echo "⏳ Port-forward attempt $i/5 failed, retrying..."
+    sleep 5s
+  fi
+  
+  if [ $i -eq 5 ]; then
+    echo "❌ Port-forward failed after 5 attempts"
+    kill $PORT_FORWARD_PID 2>/dev/null || true
+    exit 1
+  fi
+done
 
 # Test URL using localhost with port-forward
 URL="http://localhost:8080${applicationURI}"
