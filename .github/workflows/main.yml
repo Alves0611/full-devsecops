@@ -65,3 +65,16 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
     with:
       image-tag: "devsecops:${{ github.sha }}"
+
+  integration-tests:
+    name: Integration Tests
+    needs: deployment
+    uses: ./.github/workflows/integration-tests.yml
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+    with:
+      service-name: "devsecops-svc"
+      application-url: "http://localhost"
+      application-uri: "/increment/99"

@@ -1,0 +1,84 @@
+name: Integration Tests
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        description: "Kubernetes service name to test"
+        required: false
+        default: "devsecops"
+        type: string
+      application-url:
+        description: "Base URL for the application"
+        required: false
+        default: "http://localhost"
+        type: string
+      application-uri:
+        description: "URI endpoint to test"
+        required: false
+        default: "/increment/99"
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      EKS_CLUSTER_NAME:
+        required: true
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --region us-east-1 --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Integration Tests
+        run: |
+          echo "🧪 Running Integration Tests..."
+
+          # Set environment variables for integration tests
+          export DEPLOYMENT_ENV="devsecops"
+          export CONTAINER_NAME="devsecops-container"
+          export SERVICE_NAME="${{ inputs.service-name }}"
+          export APPLICATION_URL="${{ inputs.application-url }}"
+          export APPLICATION_URI="${{ inputs.application-uri }}"
+
+          # Run integration tests
+          bash scripts/integration-test.sh
+
+          if [ $? -ne 0 ]; then
+            echo "❌ Integration tests failed, rolling back deployment..."
+            kubectl -n devsecops rollout undo deploy ${{ inputs.service-name }}
+            echo "🔄 Rollback completed"
+            exit 1
+          else
+            echo "✅ Integration tests passed"
+          fi
+
+      - name: Comment Integration Test Results
+        if: always()
+        run: |
+          echo "## 🧪 Integration Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "**Service:** ${{ inputs.service-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Endpoint:** ${{ inputs.application-url }}:${{ inputs.application-uri }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ All integration tests passed successfully!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Integration tests failed - deployment rolled back" >> $GITHUB_STEP_SUMMARY
+          fi

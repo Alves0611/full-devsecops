@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Integration test script for Kubernetes deployment
+# Tests HTTP endpoints and payload validation
+
+# Environment variables (set by GitHub Actions)
+deploymentEnv=${DEPLOYMENT_ENV:-devsecops}
+containerName=${CONTAINER_NAME:-devsecops-container}
+serviceName=${SERVICE_NAME:-devsecops}
+applicationURL=${APPLICATION_URL:-http://localhost}
+applicationURI=${APPLICATION_URI:-/increment/99}
+
+echo "🧪 Starting Integration Tests"
+echo "Deployment: $deploymentEnv"
+echo "Service: $serviceName"
+echo "Container: $containerName"
+
+# Wait for pods to be ready
+echo "⏳ Waiting 30 seconds for pods to be ready..."
+sleep 30s
+
+# Check pod status
+echo "🔍 Checking pod status..."
+kubectl -n devsecops get pods -l app=devsecops
+
+# Check pod logs to see if app is starting
+echo "📋 Checking pod logs..."
+kubectl -n devsecops logs -l app=devsecops --tail=20
+
+# Wait for pods to be in Running state
+echo "⏳ Waiting for pods to be in Running state..."
+kubectl -n devsecops wait --for=condition=Ready pod -l app=devsecops --timeout=180s
+
+# Check if pods are actually running
+echo "🔍 Final pod status check..."
+kubectl -n devsecops get pods -l app=devsecops -o wide
+
+# Check if any pods are in CrashLoopBackOff or Error state
+if kubectl -n devsecops get pods -l app=devsecops --field-selector=status.phase!=Running --no-headers | grep -v "Running"; then
+  echo "❌ Some pods are not in Running state"
+  kubectl -n devsecops describe pods -l app=devsecops
+  exit 1
+fi
+
+# Check if service exists
+if ! kubectl -n devsecops get svc "${serviceName}" > /dev/null 2>&1; then
+  echo "❌ Error: Service ${serviceName} not found in namespace devsecops"
+  exit 1
+fi
+
+# Retrieve the NodePort for the service
+echo "🔍 Getting NodePort for service ${serviceName}..."
+PORT=$(kubectl -n devsecops get svc "${serviceName}" -o jsonpath='{.spec.ports[0].nodePort}')
+
+if [[ -z "$PORT" ]]; then
+  echo "❌ Error: Service ${serviceName} has no NodePort."
+  exit 1
+fi
+
+echo "📡 Service NodePort: $PORT"
+
+# Use port-forward to access the service
+echo "🔗 Setting up port-forward to service..."
+kubectl -n devsecops port-forward svc/${serviceName} 8080:8080 &
+PORT_FORWARD_PID=$!
+
+# Wait for port-forward to be ready
+echo "⏳ Waiting for port-forward to be ready..."
+sleep 20s
+
+# Test if port-forward is working with retry
+echo "🔍 Testing port-forward connectivity..."
+for i in {1..5}; do
+  if nc -z localhost 8080; then
+    echo "✅ Port-forward is working"
+    break
+  else
+    echo "⏳ Port-forward attempt $i/5 failed, retrying..."
+    sleep 5s
+  fi
+  
+  if [ $i -eq 5 ]; then
+    echo "❌ Port-forward failed after 5 attempts"
+    kill $PORT_FORWARD_PID 2>/dev/null || true
+    exit 1
+  fi
+done
+
+# Test URL using localhost with port-forward
+URL="http://localhost:8080${applicationURI}"
+echo "🎯 Testing endpoint: $URL"
+
+# Test 1: Check if service is responding (basic connectivity)
+echo "🔗 Testing basic connectivity..."
+if ! curl -s --connect-timeout 10 --max-time 30 "$URL" > /dev/null; then
+  echo "❌ Connectivity Test Failed: Cannot reach $URL"
+  kill $PORT_FORWARD_PID 2>/dev/null || true
+  exit 1
+else
+  echo "✅ Connectivity Test Passed"
+fi
+
+# Test 2: Validate payload increments 99 to 100
+echo "📊 Testing payload validation..."
+response=$(curl -s --connect-timeout 10 --max-time 30 "$URL")
+
+if [[ "$response" != "100" ]]; then
+  echo "❌ Payload Test Failed: expected 100, got '$response'"
+  kill $PORT_FORWARD_PID 2>/dev/null || true
+  exit 1
+else
+  echo "✅ Payload Test Passed: got $response"
+fi
+
+# Test 3: Check HTTP status code 200
+echo "📈 Testing HTTP status code..."
+http_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 30 "$URL")
+
+if [[ "$http_code" != "200" ]]; then
+  echo "❌ HTTP Status Test Failed: expected 200, got $http_code"
+  kill $PORT_FORWARD_PID 2>/dev/null || true
+  exit 1
+else
+  echo "✅ HTTP Status Test Passed: got $http_code"
+fi
+
+# Test 4: Check response headers
+echo "📋 Testing response headers..."
+content_type=$(curl -s -I --connect-timeout 10 --max-time 30 "$URL" | grep -i "content-type" || echo "")
+
+if [[ -n "$content_type" ]]; then
+  echo "✅ Response Headers Test Passed: $content_type"
+else
+  echo "⚠️  Response Headers Test: No content-type header found"
+fi
+
+# Clean up port-forward
+echo "🧹 Cleaning up port-forward..."
+kill $PORT_FORWARD_PID 2>/dev/null || true
+
+echo "🎉 All Integration Tests Passed!"
+echo "✅ Service is healthy and responding correctly"
