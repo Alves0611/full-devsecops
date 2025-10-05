@@ -1,0 +1,125 @@
+name: OWASP ZAP DAST Scan
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        description: "Kubernetes service name to scan"
+        required: false
+        default: "devsecops-svc"
+        type: string
+      application-url:
+        description: "Base URL for the application"
+        required: false
+        default: "http://localhost"
+        type: string
+      application-uri:
+        description: "URI endpoint to scan"
+        required: false
+        default: "/v3/api-docs"
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      EKS_CLUSTER_NAME:
+        required: true
+
+jobs:
+  owasp-zap-scan:
+    name: OWASP ZAP DAST Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install netcat
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y netcat-openbsd
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --region us-east-1 --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Setup port-forward for ZAP scan
+        run: |
+          echo "🔗 Setting up port-forward to service..."
+          kubectl -n devsecops port-forward svc/${{ inputs.service-name }} 8080:8080 &
+          echo "PORT_FORWARD_PID=$!" >> $GITHUB_ENV
+
+          # Wait for port-forward to be ready
+          echo "⏳ Waiting for port-forward to be ready..."
+          sleep 20s
+
+          # Test if port-forward is working
+          echo "🔍 Testing port-forward connectivity..."
+          for i in {1..5}; do
+            if nc -z localhost 8080; then
+              echo "✅ Port-forward is working"
+              break
+            else
+              echo "⏳ Port-forward attempt $i/5 failed, retrying..."
+              sleep 5s
+            fi
+            
+            if [ $i -eq 5 ]; then
+              echo "❌ Port-forward failed after 5 attempts"
+              exit 1
+            fi
+          done
+
+      - name: Setup ZAP workspace permissions
+        run: |
+          echo "🔧 Setting up ZAP workspace permissions..."
+          sudo chown -R runner:runner $GITHUB_WORKSPACE
+          chmod -R 755 $GITHUB_WORKSPACE
+          mkdir -p $GITHUB_WORKSPACE/zap-reports
+          chmod 777 $GITHUB_WORKSPACE/zap-reports
+
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: "${{ inputs.application-url }}:8080${{ inputs.application-uri }}"
+          fail_action: false
+          issue_title: "OWASP ZAP Security Report"
+          allow_issue_writing: false
+          artifact_name: "zap_baseline_scan"
+
+      - name: OWASP ZAP Full Scan
+        uses: zaproxy/action-full-scan@v0.12.0
+        with:
+          target: "${{ inputs.application-url }}:8080"
+          fail_action: false
+          issue_title: "OWASP ZAP Full Scan Report"
+          allow_issue_writing: false
+          artifact_name: "zap_full_scan"
+
+      - name: Cleanup port-forward
+        if: always()
+        run: |
+          echo "🧹 Cleaning up port-forward..."
+          kill $PORT_FORWARD_PID 2>/dev/null || true
+
+      - name: Comment ZAP Results
+        if: always()
+        run: |
+          echo "## 🔍 OWASP ZAP DAST Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "**Service:** ${{ inputs.service-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Target:** ${{ inputs.application-url }}:8080${{ inputs.application-uri }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ OWASP ZAP scan completed successfully!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️  OWASP ZAP scan found potential security issues" >> $GITHUB_STEP_SUMMARY
+          fi
